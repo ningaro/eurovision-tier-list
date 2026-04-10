@@ -10,10 +10,10 @@ interface ParticipantCardProps {
 
 export function ParticipantCard({
 	id,
-	country,
+	// country,
 	flag,
-	song,
-	artist,
+	// song,
+	// artist,
 }: ParticipantCardProps) {
 	const { ref } = useDraggable({
 		id,
