@@ -3,6 +3,8 @@
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/inter";
 
+@source inline("bg-{red,orange,amber,yellow,lime,green,emerald}-800");
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
