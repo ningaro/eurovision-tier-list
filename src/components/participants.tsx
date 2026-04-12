@@ -8,7 +8,7 @@ interface ParticipantsProps {
 
 export function Participants({ id, participantsList }: ParticipantsProps) {
 	return (
-		<div className="grid grid-cols-4 gap-4 md:grid-cols-6 ">
+		<div className="grid grid-cols-4 gap-4 justify-items-center md:grid-cols-6 lg:grid-cols-8">
 			{participantsList
 				.filter(({ letter }) => letter === id)
 				.map(({ id, flag, song, artist, country }) => (

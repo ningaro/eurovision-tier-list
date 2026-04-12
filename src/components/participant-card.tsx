@@ -20,7 +20,7 @@ export function ParticipantCard({
 	});
 
 	return (
-		<div ref={ref} className="rounded-xl bg-transparent z-10 inset-shadow-sm inset-shadow-gray-50/50 backdrop-blur-sm">
+		<div ref={ref} className="rounded-xl bg-transparent w-min z-10 inset-shadow-sm inset-shadow-gray-50/50 backdrop-blur-sm">
 			{/* <p className="hidden md:block">{country}</p>
 			<p className="hidden md:block">{song}</p>
 			<p className="hidden md:block">{artist}</p> */}
