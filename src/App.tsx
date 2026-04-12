@@ -31,10 +31,10 @@ function App() {
 			const filtered = value.filter(({ id: memId }) => memId !== id);
 			const changedMember = value.find(({ id: memId }) => memId === id);
 
-			if (changedMember) {
+			if (changedMember && changedMember.letter !== letter) {
 				return [...filtered, { ...changedMember, letter }];
 			}
-			return filtered;
+			return value;
 		});
 	}, []);
 
