@@ -13,7 +13,7 @@ export function Participants({ id, participantsList }: ParticipantsProps) {
 				.filter(({ letter }) => letter === id)
 				.map(({ id, flag, song, artist, country }) => (
 					<ParticipantCard
-						key={id}
+						key={`${id}`}
 						id={id}
 						flag={flag}
 						country={country}

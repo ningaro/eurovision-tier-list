@@ -1,42 +1,55 @@
 import { DragDropProvider } from "@dnd-kit/react";
-import { type ComponentProps, useCallback, useState } from "react";
+import {
+	type ComponentProps,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+} from "react";
 import { DefaultBox } from "@/components/default-box";
+import { EventMode } from "@/components/event-mode";
 import { Participants } from "@/components/participants";
 import { ThemeProvider } from "@/components/theme/theme-provider";
-import { TierBox } from "@/components/tier-box";
-import { ESC_2026_PARTICIPANTS } from "@/data/participants";
-
-type Tier = {
-	letter: string;
-	color: string;
-};
-
-const tiers: Tier[] = [
-	{ letter: "S", color: "red" },
-	{ letter: "A", color: "orange" },
-	{ letter: "B", color: "amber" },
-	{ letter: "C", color: "yellow" },
-	{ letter: "D", color: "lime" },
-	{ letter: "E", color: "green" },
-	{ letter: "F", color: "emerald" },
-];
+import { type EventSeed, PARTICIPANTS_BY_EVENT } from "@/data/participants";
+import {
+	getFromLocalStorage,
+	removeFromLocalStorage,
+	saveToLocalStorage,
+} from "@/lib/storage";
+import { ResetList } from "./components/reset-list";
+import { Tiers } from "./components/tiers";
+import {
+	dropTierLetter,
+	expandParticipantID,
+	getParticipantsByEventID,
+} from "./lib/utils";
 
 function App() {
+	const [eventID, setEventID] = useState<EventSeed["id"]>("first-semi");
 	const [members, setMembers] = useState(
-		ESC_2026_PARTICIPANTS.map((mem) => ({ ...mem, letter: "none" })),
+		getFromLocalStorage("first-semi") ??
+			PARTICIPANTS_BY_EVENT["first-semi"]
+				.map(getParticipantsByEventID)
+				.map(expandParticipantID)
+				.map(dropTierLetter),
 	);
 
-	const setMemberTear = useCallback((id: string, letter: string) => {
-		setMembers((value) => {
-			const filtered = value.filter(({ id: memId }) => memId !== id);
-			const changedMember = value.find(({ id: memId }) => memId === id);
+	const setMemberTear = useCallback(
+		(id: string, letter: string) => {
+			setMembers((value) => {
+				const filtered = value.filter(({ id: memId }) => memId !== id);
+				const changedMember = value.find(({ id: memId }) => memId === id);
 
-			if (changedMember && changedMember.letter !== letter) {
-				return [...filtered, { ...changedMember, letter }];
-			}
-			return value;
-		});
-	}, []);
+				if (changedMember && changedMember.letter !== letter) {
+					const updatedMembers = [...filtered, { ...changedMember, letter }];
+					saveToLocalStorage(eventID, updatedMembers);
+					return updatedMembers;
+				}
+				return value;
+			});
+		},
+		[eventID],
+	);
 
 	const onDragEnd: ComponentProps<typeof DragDropProvider>["onDragEnd"] =
 		useCallback(
@@ -51,25 +64,45 @@ function App() {
 			[setMemberTear],
 		);
 
+	const onReset = useCallback(() => {
+		removeFromLocalStorage(eventID);
+		setMembers(
+			PARTICIPANTS_BY_EVENT[eventID]
+				.map(getParticipantsByEventID)
+				.map(expandParticipantID)
+				.map(dropTierLetter),
+		);
+	}, [eventID]);
+
+	// biome-ignore lint/correctness/useExhaustiveDependencies: members нужны, так как изменение кеша происходит при каждом изменение members
+	const isMembersChanged = useMemo(
+		() => !!getFromLocalStorage(eventID),
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[eventID, members],
+	);
+
+	// Обновляем список участников, если был изменен тип мероприятия
+	useEffect(() => {
+		const storagedMembers = getFromLocalStorage(eventID);
+		const newMembers =
+			storagedMembers ??
+			PARTICIPANTS_BY_EVENT[eventID]
+				.map(getParticipantsByEventID)
+				.map(expandParticipantID)
+				.map(dropTierLetter);
+		setMembers(newMembers);
+	}, [eventID]);
+
 	return (
 		<ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
 			<DragDropProvider onDragEnd={onDragEnd}>
-				<div className="px-4 py-2 flex gap-2 flex-col">
+				<div className="px-4 py-2 flex gap-6 flex-col md:gap-12">
+					<EventMode event={eventID} changeEvent={setEventID} />
+					{isMembersChanged && <ResetList eventID={eventID} onReset={onReset} />}
 					<DefaultBox>
 						<Participants id="none" participantsList={members} />
 					</DefaultBox>
-					<div className="w-full flex gap-2 flex-col">
-						{tiers.map(({ letter, color }) => (
-							<TierBox
-								key={letter}
-								id={letter}
-								tierLetter={letter}
-								color={color}
-							>
-								<Participants id={letter} participantsList={members} />
-							</TierBox>
-						))}
-					</div>
+					<Tiers members={members} />
 				</div>
 			</DragDropProvider>
 		</ThemeProvider>
